@@ -1,0 +1,80 @@
+name: Build and Test
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Make wrapper executable
+        run: chmod +x gradlew
+
+      - name: Build (compile + remap + unit tests)
+        run: ./gradlew build --info --stacktrace
+        timeout-minutes: 30
+
+      - name: Upload mod jar
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TotemBed-jar
+          path: build/libs/*.jar
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-reports
+          path: |
+            build/reports/tests/**
+            build/test-results/**
+
+  gametest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs: build
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Make wrapper executable
+        run: chmod +x gradlew
+
+      - name: Run server GameTests
+        run: ./gradlew runGametest --info --stacktrace
+        timeout-minutes: 30
+
+      - name: Upload GameTest logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gametest-logs
+          path: |
+            run/logs/**
+            logs/**
+            build/reports/**

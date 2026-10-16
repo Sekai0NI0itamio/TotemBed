@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "totembed",
+  "version": "${version}",
+  "name": "TotemBed",
+  "description": "Bind a Totem of Undying to a bed with Totem Stasis. Survive death, then wake up at your bed using vanilla sleep mechanics.",
+  "authors": ["TotemBed"],
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["com.totembed.TotemBedMod"],
+    "client": ["com.totembed.TotemBedClient"],
+    "fabric-datagen": ["com.totembed.datagen.TotemBedDataGenerator"]
+  },
+  "mixins": ["totembed.mixins.json"],
+  "depends": {
+    "fabricloader": ">=0.16.14",
+    "fabric-api": "*",
+    "minecraft": "~1.21.1",
+    "java": ">=21"
+  },
+  "suggests": {
+    "another-mod": "*"
+  }
+}

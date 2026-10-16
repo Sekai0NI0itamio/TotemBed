@@ -1,0 +1,10 @@
+{
+  "enchantment.totembed.totem_stasis": "Totem Stasis",
+  "tooltip.totembed.stasis_linked": "Bound: %s %s, %s, %s",
+  "message.totembed.bound": "Totem bound to bed at %s, %s, %s (%s)",
+  "message.totembed.returned": "The totem returns you to your bed.",
+  "message.totembed.returned_safe": "The bed cannot be slept in here; placed beside it instead.",
+  "message.totembed.bed_gone": "Bound bed is gone; totem saved you where you stand.",
+  "message.totembed.invalid_bed": "Bound bed is unusable; totem saved you where you stand.",
+  "message.totembed.return_failed": "Totem saved you, but the bed return failed."
+}
