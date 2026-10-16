@@ -5,19 +5,19 @@ import net.fabricmc.fabric.api.datagen.v1.DataGeneratorEntrypoint;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataGenerator;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricDynamicRegistryProvider;
+import net.minecraft.component.type.AttributeModifierSlot;
 import net.minecraft.enchantment.Enchantment;
-import net.minecraft.entity.EquipmentSlotGroup;
 import net.minecraft.item.Item;
 import net.minecraft.registry.RegistryEntryLookup;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
+import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.registry.entry.RegistryEntryList;
 import net.minecraft.registry.tag.ItemTags;
 import net.minecraft.util.Identifier;
 
 import java.util.concurrent.CompletableFuture;
-import net.minecraft.registry.HolderLookup;
 
 public class TotemBedDataGenerator implements DataGeneratorEntrypoint {
     @Override
@@ -29,13 +29,13 @@ public class TotemBedDataGenerator implements DataGeneratorEntrypoint {
 
     public static class EnchantmentGenerator extends FabricDynamicRegistryProvider {
         public EnchantmentGenerator(FabricDataOutput output,
-                                    CompletableFuture<HolderLookup.Provider> registriesFuture) {
+                                    CompletableFuture<RegistryWrapper.WrapperLookup> registriesFuture) {
             super(output, registriesFuture);
         }
 
         @Override
-        protected void configure(HolderLookup.Provider registries, Entries entries) {
-            RegistryEntryLookup<Item> items = registries.lookupOrThrow(RegistryKeys.ITEM);
+        protected void configure(RegistryWrapper.WrapperLookup registries, Entries entries) {
+            RegistryEntryLookup<Item> items = registries.getOrThrow(RegistryKeys.ITEM);
             RegistryKey<Item> totemKey = RegistryKey.of(RegistryKeys.ITEM,
                 Identifier.ofVanilla("totem_of_undying"));
             RegistryEntryList<Item> supported;
@@ -48,7 +48,7 @@ public class TotemBedDataGenerator implements DataGeneratorEntrypoint {
             }
 
             entries.add(TotemStasisEnchantment.KEY,
-                Enchantment.enchantment(
+                Enchantment.builder(
                     Enchantment.definition(
                         supported,
                         10, // weight
@@ -56,9 +56,9 @@ public class TotemBedDataGenerator implements DataGeneratorEntrypoint {
                         Enchantment.constantCost(25),
                         Enchantment.constantCost(50),
                         4, // anvil cost
-                        EquipmentSlotGroup.HAND
+                        AttributeModifierSlot.HAND
                     )
-                ).build(TotemStasisEnchantment.ID));
+                ).build(TotemStasisEnchantment.KEY.getValue()));
         }
 
         @Override

@@ -24,47 +24,91 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(LivingEntity.class)
 public abstract class LivingEntityTotemMixin {
     @Unique
-    private TotemStasisData totembed$pending;
+    private ItemStack totembed$mainSnap;
+    @Unique
+    private ItemStack totembed$offSnap;
 
     @Inject(method = "tryUseTotem", at = @At("HEAD"))
     private void totembed$captureBinding(DamageSource source, CallbackInfoReturnable<Boolean> cir) {
-        totembed$pending = null;
+        totembed$mainSnap = null;
+        totembed$offSnap = null;
         LivingEntity self = (LivingEntity) (Object) this;
         if (!(self instanceof ServerPlayerEntity)) return;
         try {
-            // Match vanilla hand order (main first) so we capture the stack
-            // vanilla will actually consume.
-            for (Hand hand : Hand.values()) {
-                ItemStack stack = self.getStackInHand(hand);
-                if (stack == null || stack.isEmpty() || !stack.isOf(Items.TOTEM_OF_UNDYING)) continue;
-                if (TotemBedComponents.TOTEM_STASIS == null) break;
-                TotemStasisData data = stack.get(TotemBedComponents.TOTEM_STASIS);
-                if (data != null && data.isWellFormed()) {
-                    totembed$pending = new TotemStasisData(data.dimension(), data.pos().toImmutable());
-                    break;
-                }
-                // First totem found without binding: vanilla will use an unbound
-                // totem, so there is nothing to schedule.
-                break;
-            }
+            totembed$mainSnap = self.getStackInHand(Hand.MAIN_HAND).copy();
+            totembed$offSnap = self.getStackInHand(Hand.OFF_HAND).copy();
         } catch (Exception e) {
-            totembed$pending = null;
+            totembed$mainSnap = null;
+            totembed$offSnap = null;
         }
     }
 
     @Inject(method = "tryUseTotem", at = @At("RETURN"))
     private void totembed$scheduleReturn(DamageSource source, CallbackInfoReturnable<Boolean> cir) {
-        TotemStasisData pending = totembed$pending;
-        totembed$pending = null;
+        ItemStack mainSnap = totembed$mainSnap;
+        ItemStack offSnap = totembed$offSnap;
+        totembed$mainSnap = null;
+        totembed$offSnap = null;
         try {
-            if (pending == null) return;
             if (!Boolean.TRUE.equals(cir.getReturnValue())) return;
             LivingEntity self = (LivingEntity) (Object) this;
             if (!(self instanceof ServerPlayerEntity player)) return;
             if (player.isDead()) return;
-            BedReturnManager.schedule(player, pending);
+
+            TotemStasisData data = pickActivatingBinding(self, mainSnap, offSnap);
+            if (data == null) return; // unbound totem: vanilla behavior only
+            BedReturnManager.schedule(player, data);
         } catch (Exception e) {
             TotemBedMod.LOGGER.warn("[TotemBed] totem mixin post-hook failed safely: {}", e.toString());
+        }
+    }
+
+    /**
+     * Figure out which hand vanilla actually consumed: the snapshot whose
+     * stack shrank (or vanished). Falls back to main-first bound data
+     * (matching vanilla's Hand.values() order) when nothing shrank
+     * (e.g. creative mode).
+     */
+    @Unique
+    private static TotemStasisData pickActivatingBinding(LivingEntity self,
+                                                         ItemStack mainSnap, ItemStack offSnap) {
+        ItemStack mainNow = self.getStackInHand(Hand.MAIN_HAND);
+        ItemStack offNow = self.getStackInHand(Hand.OFF_HAND);
+
+        TotemStasisData mainData = boundData(mainSnap);
+        TotemStasisData offData = boundData(offSnap);
+
+        boolean mainShrank = shrank(mainSnap, mainNow);
+        boolean offShrank = shrank(offSnap, offNow);
+        if (mainShrank && mainData != null) return mainData;
+        if (offShrank && offData != null) return offData;
+        // No detectable consumption (creative) or only one side bound:
+        // mirror vanilla's main-first preference.
+        if (mainData != null) return mainData;
+        return offData;
+    }
+
+    @Unique
+    private static boolean shrank(ItemStack before, ItemStack after) {
+        try {
+            if (before == null || before.isEmpty() || !before.isOf(Items.TOTEM_OF_UNDYING)) return false;
+            if (after == null || after.isEmpty()) return true;
+            if (!after.isOf(Items.TOTEM_OF_UNDYING)) return true;
+            return after.getCount() < before.getCount();
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @Unique
+    private static TotemStasisData boundData(ItemStack stack) {
+        try {
+            if (stack == null || stack.isEmpty() || !stack.isOf(Items.TOTEM_OF_UNDYING)) return null;
+            if (TotemBedComponents.TOTEM_STASIS == null) return null;
+            TotemStasisData data = stack.get(TotemBedComponents.TOTEM_STASIS);
+            return (data != null && data.isWellFormed()) ? data : null;
+        } catch (Exception e) {
+            return null;
         }
     }
 }

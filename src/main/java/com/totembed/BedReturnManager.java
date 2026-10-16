@@ -204,7 +204,9 @@ public final class BedReturnManager {
             }
         } catch (Exception e) {
             TotemBedMod.LOGGER.warn("[TotemBed] wakeUp threw safely: {}", e.toString());
-            try { player.stopSleeping(); } catch (Exception ignored) {}
+            try {
+                if (player.isSleeping()) player.wakeUp(true, true);
+            } catch (Exception ignored) {}
         }
 
         // Let vanilla's choice win: move to the vanilla exit if we have one and
@@ -224,7 +226,6 @@ public final class BedReturnManager {
         // Final safety: never leave the player sleeping.
         if (player.isSleeping()) {
             try { player.wakeUp(true, true); } catch (Exception ignored) {}
-            try { if (player.isSleeping()) player.stopSleeping(); } catch (Exception ignored) {}
         }
 
         TotemBedMod.LOGGER.info("[TotemBed] bed return complete for {} at {}",

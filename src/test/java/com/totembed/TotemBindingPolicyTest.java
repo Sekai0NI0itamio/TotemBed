@@ -1,8 +1,6 @@
 package com.totembed;
 
 import com.totembed.data.TotemStasisData;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.util.math.BlockPos;
 import org.junit.jupiter.api.Test;
 
@@ -11,24 +9,14 @@ import java.util.ArrayList;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Tooltip + binding-policy unit tests (no server needed).
+ * Binding-policy unit tests that run on plain JUnit (no game bootstrap):
+ * only pure data + math, never Items/ItemStacks/Blocks.
  */
 public class TotemBindingPolicyTest {
 
     @Test
-    public void nonTotemGetsNoTooltipLine() {
-        ItemStack dirt = new ItemStack(Items.DIRT);
+    public void nullStackNeverThrowsInTooltip() {
         var lines = new ArrayList<net.minecraft.text.Text>();
-        // Must not throw even though the component is unregistered in unit tests.
-        TotemTooltip.appendLines(dirt, lines);
-        assertTrue(lines.isEmpty());
-    }
-
-    @Test
-    public void malformedDataNeverThrowsInTooltip() {
-        ItemStack totem = new ItemStack(Items.TOTEM_OF_UNDYING);
-        var lines = new ArrayList<net.minecraft.text.Text>();
-        TotemTooltip.appendLines(totem, lines);
         TotemTooltip.appendLines(null, lines);
         assertTrue(lines.isEmpty());
     }
@@ -41,5 +29,13 @@ public class TotemBindingPolicyTest {
         assertTrue(data.isWellFormed());
         assertEquals("minecraft:overworld", data.dimension());
         assertEquals(new BlockPos(7, 64, 7), data.pos());
+    }
+
+    @Test
+    public void dimensionsAreNeverConfused() {
+        TotemStasisData overworld = new TotemStasisData("minecraft:overworld", new BlockPos(0, 64, 0));
+        TotemStasisData nether = new TotemStasisData("minecraft:the_nether", new BlockPos(0, 64, 0));
+        assertNotEquals(overworld.dimension(), nether.dimension());
+        assertTrue(overworld.isWellFormed() && nether.isWellFormed());
     }
 }

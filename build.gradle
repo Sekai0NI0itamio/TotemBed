@@ -11,14 +11,6 @@ base {
 }
 
 loom {
-    splitEnvironmentSourceSets()
-
-    mods {
-        "totembed" {
-            sourceSet sourceSets.main
-            sourceSet sourceSets.client
-        }
-    }
 }
 
 repositories {
@@ -59,7 +51,6 @@ jar {
     }
 }
 
-// Gametest source set runs on the server; loom wires `runGametest` automatically.
 test {
     useJUnitPlatform()
     testLogging {
