@@ -45,9 +45,9 @@ jobs:
             build/reports/tests/**
             build/test-results/**
 
-  gametest:
+  server:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 25
     needs: build
     steps:
       - name: Checkout
@@ -65,19 +65,34 @@ jobs:
       - name: Make wrapper executable
         run: chmod +x gradlew
 
-      - name: List available run/test tasks
-        run: ./gradlew tasks --all --console=plain 2>&1 | grep -iE "^(run|test|check|build|gametest)| - run| - test" | head -n 40
+      - name: Agree to the Minecraft EULA for the test server
+        run: mkdir -p run && printf 'eula=true\n' > run/eula.txt
 
-      - name: Run server GameTests
-        run: ./gradlew runGametest --info --stacktrace
-        timeout-minutes: 30
+      - name: Boot dedicated server with TotemBed
+        timeout-minutes: 20
+        run: |
+          ./gradlew runServer --console=plain > /tmp/totembed-server.log 2>&1 &
+          SERVER_PID=$!
+          BOOTED=0
+          for i in $(seq 1 60); do
+            sleep 10
+            if grep -qE 'Done \([0-9.]+s\)!' /tmp/totembed-server.log; then BOOTED=1; break; fi
+            if grep -qE 'Failed to start the minecraft server|Could not execute entrypoint|Mixin apply failed' /tmp/totembed-server.log; then break; fi
+            if ! kill -0 $SERVER_PID 2>/dev/null; then break; fi
+          done
+          echo '---- tail ----'
+          tail -n 40 /tmp/totembed-server.log || true
+          echo '---- key lines ----'
+          grep -E 'Done \(|TotemBed|Mixin|ERROR|FAILED|For help, type' /tmp/totembed-server.log | head -n 40 || true
+          pkill -f DevLaunchInjector || true
+          kill $SERVER_PID 2>/dev/null || true
+          sleep 5
+          pkill -9 -f DevLaunchInjector || true
+          if [ "$BOOTED" = '1' ]; then echo 'SERVER BOOTED OK'; exit 0; else echo 'SERVER DID NOT BOOT'; exit 1; fi
 
-      - name: Upload GameTest logs
+      - name: Upload server log
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: gametest-logs
-          path: |
-            run/logs/**
-            logs/**
-            build/reports/**
+          name: dedicated-server-log
+          path: /tmp/totembed-server.log

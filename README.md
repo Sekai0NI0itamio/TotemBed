@@ -75,9 +75,14 @@ The visual impression: you pop a totem, then wake up at your bed.
 
 - `./gradlew build` — compile, remap, unit tests.
 - `./gradlew test` — JUnit: data well-formedness, codec round-trip, bed-half
-  math, tooltip policy.
-- `./gradlew runGametest` — server GameTests: bed-pair completeness, data
-  checks, component registration.
+  math, tooltip policy, and data-file wiring (enchantment JSON, metadata,
+  mixin config, translations).
+- Dedicated-server boot (`./gradlew runServer` with agreed EULA): the `server`
+  CI job boots a real 1.21.1 dedicated server with the mod and asserts it
+  reaches `Done (...)!` with our init line and no mixin/entrypoint failures.
+- `TotemBedGameTest` (`@GameTest`) compiles with the mod and runs in any
+  standard GameTest harness; Loom 1.7.4 provides no `runGametest` task, so
+  GameTest execution is currently a manual verification item (see below).
 
 See `.github/workflows/build.yml` for the exact CI both jobs run in.
 
@@ -89,9 +94,17 @@ See `.github/workflows/build.yml` for the exact CI both jobs run in.
   on the server; otherwise the return is skipped safely.
 - If the vanilla exit search finds no safe spot, the player stays where the
   totem saved them (alive, awake) with a message.
-- Manual verification still recommended: exact wake orientation with crowded
-  bedrooms, respawn-anchor/pyramid edge cases, and heavy-lag double-activation
-  timing on a live server.
+
+## Outstanding manual verification
+
+Not automated in CI (no interactive client available there):
+
+- Exact wake orientation/exit choice with crowded bedrooms and obstructed beds.
+- End-to-end bind → die → wake sequence on a live server, including
+  cross-dimension returns and Nether/End beds.
+- `TotemBedGameTest` GameTests under a GameTest harness (`runGametest` is not
+  provided by Loom 1.7.4).
+- Heavy-lag double-activation timing and multiplayer edge cases.
 
 ## Build from source
 
