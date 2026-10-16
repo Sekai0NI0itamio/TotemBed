@@ -2,14 +2,18 @@ package com.totembed.datagen;
 
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricLanguageProvider;
+import net.minecraft.registry.RegistryWrapper;
+
+import java.util.concurrent.CompletableFuture;
 
 public class TotemBedLangProvider extends FabricLanguageProvider {
-    public TotemBedLangProvider(FabricDataOutput output) {
-        super(output, "en_us");
+    public TotemBedLangProvider(FabricDataOutput output,
+                                CompletableFuture<RegistryWrapper.WrapperLookup> registriesFuture) {
+        super(output, registriesFuture);
     }
 
     @Override
-    public void generateTranslations(TranslationBuilder b) {
+    public void generateTranslations(RegistryWrapper.WrapperLookup lookup, TranslationBuilder b) {
         b.add("enchantment.totembed.totem_stasis", "Totem Stasis");
         b.add("tooltip.totembed.stasis_linked", "Bound: %s %s, %s, %s");
         b.add("message.totembed.bound", "Totem bound to bed at %s, %s, %s (%s)");

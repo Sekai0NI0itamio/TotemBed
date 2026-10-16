@@ -12,9 +12,7 @@ import net.minecraft.registry.RegistryEntryLookup;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.registry.entry.RegistryEntryList;
-import net.minecraft.registry.tag.ItemTags;
 import net.minecraft.util.Identifier;
 
 import java.util.concurrent.CompletableFuture;
@@ -35,17 +33,11 @@ public class TotemBedDataGenerator implements DataGeneratorEntrypoint {
 
         @Override
         protected void configure(RegistryWrapper.WrapperLookup registries, Entries entries) {
-            RegistryEntryLookup<Item> items = registries.getOrThrow(RegistryKeys.ITEM);
+            RegistryEntryLookup<Item> items = registries.getWrapperOrThrow(RegistryKeys.ITEM);
             RegistryKey<Item> totemKey = RegistryKey.of(RegistryKeys.ITEM,
                 Identifier.ofVanilla("totem_of_undying"));
-            RegistryEntryList<Item> supported;
-            try {
-                RegistryEntry<Item> totemEntry = items.getOrThrow(totemKey);
-                supported = RegistryEntryList.of(totemEntry);
-            } catch (Exception e) {
-                // Fallback: a tag that always resolves; static JSON still carries the real item.
-                supported = items.getOrThrow(ItemTags.HAND_EQUIPMENT);
-            }
+            // The vanilla totem always resolves; fail loudly if it ever does not.
+            RegistryEntryList<Item> supported = RegistryEntryList.of(items.getOrThrow(totemKey));
 
             entries.add(TotemStasisEnchantment.KEY,
                 Enchantment.builder(

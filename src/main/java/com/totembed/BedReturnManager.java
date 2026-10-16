@@ -188,7 +188,7 @@ public final class BedReturnManager {
         boolean slept = false;
         try {
             var result = player.trySleep(head);
-            slept = result.isRight();
+            slept = result.right().isPresent();
             if (!slept) {
                 TotemBedMod.LOGGER.info("[TotemBed] trySleep rejected: {}",
                     result.left().map(r -> r.toString()).orElse("unknown"));
