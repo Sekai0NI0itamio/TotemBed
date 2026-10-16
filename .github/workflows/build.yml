@@ -65,6 +65,9 @@ jobs:
       - name: Make wrapper executable
         run: chmod +x gradlew
 
+      - name: List available run/test tasks
+        run: ./gradlew tasks --all --console=plain 2>&1 | grep -iE "^(run|test|check|build|gametest)| - run| - test" | head -n 40
+
       - name: Run server GameTests
         run: ./gradlew runGametest --info --stacktrace
         timeout-minutes: 30
